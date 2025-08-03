@@ -9,18 +9,34 @@
     <h1 style="color: blue; text-align: center; margin: 50px;">
         FMS Management System
     </h1>
+    
     <div id="root" style="border: 2px solid red; padding: 20px; margin: 20px; background: #f0f0f0;">
-        <p>Loading...</p>
+        <p>Initial content...</p>
     </div>
     
     <script>
-        console.log('Script running!');
-        const rootElement = document.getElementById('root');
-        console.log('Root element:', rootElement);
+        // DOM이 완전히 로드된 후 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded!');
+            
+            const rootElement = document.getElementById('root');
+            console.log('Root element found:', rootElement);
+            
+            if (rootElement) {
+                rootElement.innerHTML = '<h2 style="color: green; text-align: center;">✅ SUCCESS! FMS System Ready!</h2>';
+            } else {
+                console.error('Root element not found!');
+            }
+        });
         
-        if (rootElement) {
-            rootElement.innerHTML = '<h2 style="color: green;">SUCCESS! Root element found!</h2>';
-        }
+        // 추가 테스트: 페이지 로드 완료 후에도 실행
+        window.addEventListener('load', function() {
+            console.log('Page fully loaded!');
+            const root = document.getElementById('root');
+            if (root && !root.innerHTML.includes('SUCCESS')) {
+                root.innerHTML = '<h2 style="color: orange;">Backup loading complete!</h2>';
+            }
+        });
     </script>
 </body>
 </html>
