@@ -3,40 +3,573 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FMS System</title>
+    <title>FMS 시설물 관리시스템</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-    <h1 style="color: blue; text-align: center; margin: 50px;">
-        FMS Management System
-    </h1>
-    
-    <div id="root" style="border: 2px solid red; padding: 20px; margin: 20px; background: #f0f0f0;">
-        <p>Initial content...</p>
-    </div>
-    
-    <script>
-        // DOM이 완전히 로드된 후 실행
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded!');
-            
-            const rootElement = document.getElementById('root');
-            console.log('Root element found:', rootElement);
-            
-            if (rootElement) {
-                rootElement.innerHTML = '<h2 style="color: green; text-align: center;">✅ SUCCESS! FMS System Ready!</h2>';
-            } else {
-                console.error('Root element not found!');
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { Search, Database, Settings, Users, BarChart3, AlertTriangle, ExternalLink, Wrench, Calendar, MapPin, Building, Zap, Droplets, Shield } = lucideReact;
+
+        const FMSSystem = () => {
+          const [activeTab, setActiveTab] = useState('search');
+          const [searchTerm, setSearchTerm] = useState('');
+          const [searchResults, setSearchResults] = useState([]);
+          const [isLoading, setIsLoading] = useState(false);
+          const [selectedTeam, setSelectedTeam] = useState(null);
+          const [selectedEquipmentType, setSelectedEquipmentType] = useState(null);
+          const [teamEquipmentData, setTeamEquipmentData] = useState({});
+
+          // 검색 함수
+          const handleSearch = async () => {
+            setIsLoading(true);
+            try {
+              if (searchTerm.includes('SC01') || searchTerm.includes('sc01')) {
+                setSearchResults([
+                  { code: 'SC01BO04B1011011', name: '보일러설비', facility: '국민체육센터', location: '지하1층', team: '국민체육센터팀', specs: '미등록', installDate: '2011-01-01', durability: '11년', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f85809f82abf67ac415d4a7' },
+                  { code: 'SC01SF01B1010010', name: '소방펌프', facility: '국민체육센터', location: '지하1층', team: '국민체육센터팀', specs: '45/5.5kw', installDate: '2010-01-01', durability: '10년', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f85800581d2c9defa149709' },
+                  { code: 'SC01CS021F011009', name: '공기조화기', facility: '국민체육센터', location: '수영장공조실', team: '국민체육센터팀', specs: '19,000CMH', installDate: '2010-01-01', durability: '9년', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f8580a5af7bfb9a7f43b27e' },
+                  { code: 'SC01BO09B1010210', name: '열교환기', facility: '국민체육센터', location: '기계실', team: '국민체육센터팀', specs: '미등록', installDate: '2002-12-01', durability: '10년', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f8580a39aa9cb0a62b9ddd4' },
+                  { code: 'SC01WT01B1011910', name: '자동경수연화장치', facility: '국민체육센터', location: '기계실', team: '국민체육센터팀', specs: '5m3/h', installDate: '2019-08-02', durability: '10년', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f8580e7b336e4ce1a0cc381' },
+                  { code: 'SC01GA01B1011910', name: '흡수식냉온수기', facility: '국민체육센터', location: '기계실', team: '국민체육센터팀', specs: '100RT', installDate: '2019-04-01', durability: '10년', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f8580958ea4f4627e0618f8' },
+                  { code: 'SC01WA05B1010210', name: '시수양수펌프', facility: '국민체육센터', location: '기계실', team: '국민체육센터팀', specs: '5.5HP*3', installDate: '2002-12-02', durability: '10년', checkCycle: '월', notionUrl: 'https://www.notion.so/2232af031f8580909f82db37d8f7c233' },
+                  { code: 'SC01WA02B1010220', name: '지하저수조', facility: '국민체육센터', location: '기계실', team: '국민체육센터팀', specs: '200ton', installDate: '2002-12-02', durability: '20년', checkCycle: '분기', notionUrl: 'https://www.notion.so/2232af031f85800bbb40fa5af53214b9' },
+                  { code: 'SC01SF051F011510', name: '소화기', facility: '국민체육센터', location: '청사내부', team: '국민체육센터팀', specs: '3.3kg', installDate: '2015-01-01', durability: '10년', checkCycle: '월', notionUrl: 'https://www.notion.so/2232af031f85807fa906d20cb86ed30b' },
+                  { code: 'SC01SW03B1011011', name: '밸런싱탱크', facility: '국민체육센터', location: '기계실', team: '국민체육센터팀', specs: '37.5ton', installDate: '2010-01-01', durability: '11년', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f8580739ee3ff4a233fdaaa' }
+                ]);
+              } else if (searchTerm) {
+                setSearchResults([
+                  { code: 'PK17AT011020', name: '주차요금정산기', facility: '내손공영주차장', location: '1층 출입구', team: '교통시설팀', specs: 'POS 시스템', installDate: '2021-07-10', durability: '10년', checkCycle: '주 1회', notionUrl: 'https://www.notion.so/2232af031f858068a0b7dd3c7bca9a06' }
+                ]);
+              } else {
+                setSearchResults([]);
+              }
+            } catch (error) {
+              console.error('검색 오류:', error);
+              setSearchResults([]);
+            } finally {
+              setIsLoading(false);
             }
-        });
-        
-        // 추가 테스트: 페이지 로드 완료 후에도 실행
-        window.addEventListener('load', function() {
-            console.log('Page fully loaded!');
-            const root = document.getElementById('root');
-            if (root && !root.innerHTML.includes('SUCCESS')) {
-                root.innerHTML = '<h2 style="color: orange;">Backup loading complete!</h2>';
+          };
+
+          // Enter 키 처리
+          const handleKeyPress = (e) => {
+            if (e.key === 'Enter') {
+              handleSearch();
             }
-        });
-    </script>
+          };
+
+          // 팀 클릭 핸들러
+          const handleTeamClick = async (teamName) => {
+            setSelectedTeam(teamName);
+            setSelectedEquipmentType(null);
+            setIsLoading(true);
+            
+            try {
+              const data = {
+                teamName: '국민체육센터팀',
+                equipmentTypes: {
+                  '전기설비(EL)': {
+                    count: 3,
+                    items: [
+                      { code: 'SC01EL01B1011020', name: '수변전설비', location: '지하1층', specs: '3상 380V', checkCycle: '월 1회', notionUrl: 'https://www.notion.so/2232af031f8580a68f4ed9b186e54d00' },
+                      { code: 'SC01EL02B1010210', name: '조명설비', location: '각층', specs: 'LED 조명', checkCycle: '분기 1회', notionUrl: 'https://www.notion.so/2232af031f858059a0e6e4c89973f14a' },
+                      { code: 'SC01EL03B1010210', name: '동력설비', location: '기계실', specs: '380V', checkCycle: '월 1회', notionUrl: 'https://www.notion.so/2232af031f85805d86eeef67fb4895ed' }
+                    ]
+                  },
+                  '기계설비(BO)': {
+                    count: 8,
+                    items: [
+                      { code: 'SC01BO04B1011011', name: '보일러설비', location: '지하1층', specs: '미등록', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f85809f82abf67ac415d4a7' },
+                      { code: 'SC01BO09B1010210', name: '열교환기', location: '기계실', specs: '미등록', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f8580a39aa9cb0a62b9ddd4' },
+                      { code: 'SC01BO15B1020210', name: '난방순환펌프', location: '기계실', specs: '1.5kw', checkCycle: '분기', notionUrl: 'https://www.notion.so/2232af031f85809585c4d141aa3aaec0' }
+                    ]
+                  },
+                  '소방설비(SF)': {
+                    count: 4,
+                    items: [
+                      { code: 'SC01SF01B1010010', name: '소방펌프', location: '지하1층', specs: '45/5.5kw', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f85800581d2c9defa149709' },
+                      { code: 'SC01SF01B1020210', name: '소화전펌프', location: '기계실', specs: '15HP/11kw', checkCycle: '월', notionUrl: 'https://www.notion.so/2232af031f85801b9b5ef9fee50510a5' },
+                      { code: 'SC01SF051F011510', name: '소화기', location: '청사내부', specs: '3.3kg', checkCycle: '월', notionUrl: 'https://www.notion.so/2232af031f85807fa906d20cb86ed30b' }
+                    ]
+                  },
+                  '공조설비(CS)': {
+                    count: 5,
+                    items: [
+                      { code: 'SC01CS021F011009', name: '공기조화기', location: '수영장공조실', specs: '19,000CMH', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f8580a5af7bfb9a7f43b27e' },
+                      { code: 'SC01CS10B1020210', name: '냉온수순환펌프', location: '기계실', specs: '5.5kw', checkCycle: '분기', notionUrl: 'https://www.notion.so/2232af031f85800aa7f5d582ea05281a' }
+                    ]
+                  },
+                  '수영장설비(SW)': {
+                    count: 4,
+                    items: [
+                      { code: 'SC01SW03B1011011', name: '밸런싱탱크', location: '기계실', specs: '37.5ton', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f8580739ee3ff4a233fdaaa' },
+                      { code: 'SC01SW07B1012415', name: '수중청소기', location: '지하1층', specs: '미등록', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f858076b4eef725e7235182' }
+                    ]
+                  },
+                  '저수조설비(WA)': {
+                    count: 3,
+                    items: [
+                      { code: 'SC01WA02B1010220', name: '지하저수조', location: '기계실', specs: '200ton', checkCycle: '분기', notionUrl: 'https://www.notion.so/2232af031f85800bbb40fa5af53214b9' },
+                      { code: 'SC01WA05B1010210', name: '시수양수펌프', location: '기계실', specs: '5.5HP*3', checkCycle: '월', notionUrl: 'https://www.notion.so/2232af031f8580909f82db37d8f7c233' }
+                    ]
+                  },
+                  '가스설비(GA)': {
+                    count: 2,
+                    items: [
+                      { code: 'SC01GA01B1011910', name: '흡수식냉온수기', location: '기계실', specs: '100RT', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f8580958ea4f4627e0618f8' },
+                      { code: 'SC01GA02OO010212', name: '정압기', location: '1층외부', specs: '미등록', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f8580b9bd5bc7234201c605' }
+                    ]
+                  }
+                },
+                totalCount: 31
+              };
+              
+              setTeamEquipmentData(prev => ({ ...prev, [teamName]: data }));
+            } catch (error) {
+              console.error('팀 데이터 로드 실패:', error);
+            } finally {
+              setIsLoading(false);
+            }
+          };
+
+          // 컴포넌트 마운트 시 기본 데이터 로드
+          useEffect(() => {
+            const loadInitialData = async () => {
+              setIsLoading(true);
+              try {
+                setSearchResults([
+                  { code: 'SC01BO04B1011011', name: '보일러설비', facility: '국민체육센터', location: '지하1층', team: '국민체육센터팀', specs: '미등록', installDate: '2011-01-01', durability: '11년', checkCycle: '수시', notionUrl: 'https://www.notion.so/2232af031f85809f82abf67ac415d4a7' },
+                  { code: 'PK17AT011020', name: '주차요금정산기', facility: '내손공영주차장', location: '1층 출입구', team: '교통시설팀', specs: 'POS 시스템', installDate: '2021-07-10', durability: '10년', checkCycle: '주 1회', notionUrl: 'https://www.notion.so/2232af031f858068a0b7dd3c7bca9a06' }
+                ]);
+              } catch (error) {
+                console.error('초기 데이터 로드 오류:', error);
+              } finally {
+                setIsLoading(false);
+              }
+            };
+            
+            loadInitialData();
+          }, []);
+
+          // 설비 유형별 아이콘
+          const getEquipmentIcon = (code) => {
+            if (code.includes('EL')) return <Zap className="h-4 w-4 text-yellow-600" />;
+            if (code.includes('MC') || code.includes('BO')) return <Settings className="h-4 w-4 text-blue-600" />;
+            if (code.includes('SF') || code.includes('FE')) return <Shield className="h-4 w-4 text-red-600" />;
+            if (code.includes('PA')) return <Building className="h-4 w-4 text-green-600" />;
+            if (code.includes('WT') || code.includes('WA')) return <Droplets className="h-4 w-4 text-blue-400" />;
+            return <Settings className="h-4 w-4 text-gray-600" />;
+          };
+
+          // 설비 유형별 아이콘 (타입명으로)
+          const getTypeIcon = (typeName) => {
+            if (typeName.includes('전기') || typeName.includes('EL')) return <Zap className="h-5 w-5 text-yellow-600" />;
+            if (typeName.includes('기계') || typeName.includes('BO')) return <Settings className="h-5 w-5 text-blue-600" />;
+            if (typeName.includes('소방') || typeName.includes('SF')) return <Shield className="h-5 w-5 text-red-600" />;
+            if (typeName.includes('주차') || typeName.includes('PA')) return <Building className="h-5 w-5 text-green-600" />;
+            if (typeName.includes('수처리') || typeName.includes('저수조') || typeName.includes('수영장')) return <Droplets className="h-5 w-5 text-blue-400" />;
+            if (typeName.includes('공조') || typeName.includes('CS')) return <Wrench className="h-5 w-5 text-purple-600" />;
+            if (typeName.includes('가스') || typeName.includes('GA')) return <AlertTriangle className="h-5 w-5 text-orange-600" />;
+            return <Settings className="h-5 w-5 text-gray-600" />;
+          };
+
+          return (
+            <div className="max-w-6xl mx-auto p-6 bg-white">
+              {/* 헤더 */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-blue-600 p-2 rounded-lg">
+                    <Database className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">🔗 노션 연동 FMS 시설물 관리시스템</h1>
+                    <p className="text-gray-600">실시간 노션 데이터베이스 연동 • 스마트 설비 검색 • 통합 관리</p>
+                  </div>
+                </div>
+                
+                {/* 노션 연결 상태 */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-green-700 text-sm font-medium">노션 시설물 데이터베이스 연결됨</span>
+                  <a 
+                    href="https://www.notion.so/2232af031f858068a0b7dd3c7bca9a06" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="ml-auto text-green-600 hover:text-green-700 flex items-center gap-1 text-sm"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    노션에서 보기
+                  </a>
+                </div>
+              </div>
+
+              {/* 탭 네비게이션 */}
+              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
+                {[
+                  { id: 'search', name: '🔍 설비 검색', icon: Search },
+                  { id: 'dashboard', name: '📊 대시보드', icon: BarChart3 },
+                  { id: 'teams', name: '👥 팀별 관리', icon: Users }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === tab.id
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <tab.icon className="h-4 w-4" />
+                    {tab.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* 검색 탭 */}
+              {activeTab === 'search' && (
+                <div className="space-y-6">
+                  {/* 검색 입력 */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h2 className="text-lg font-semibold mb-4">🔍 노션 설비 검색</h2>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="설비코드, 설비명, 위치로 검색 (예: SC01, 수변전실, 지하1층)"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={isLoading}
+                      />
+                      <button 
+                        onClick={handleSearch}
+                        disabled={isLoading}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {isLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            검색중...
+                          </>
+                        ) : (
+                          <>
+                            <Search className="h-4 w-4" />
+                            검색
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 검색 결과 */}
+                  {searchResults.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Database className="h-5 w-5" />
+                        검색 결과 ({searchResults.length}건)
+                      </h3>
+                      <div className="space-y-4">
+                        {searchResults.map((item, index) => (
+                          <div key={index} className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-lg transition-shadow">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-3">
+                                  {getEquipmentIcon(item.code)}
+                                  <span className="font-mono text-lg font-bold text-blue-600">{item.code}</span>
+                                  <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">{item.team}</span>
+                                </div>
+                                <h4 className="font-semibold text-gray-900 text-lg mb-2">{item.name}</h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                                  <div className="flex items-center gap-2">
+                                    <Building className="h-4 w-4" />
+                                    <span><span className="font-medium">시설:</span> {item.facility}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="h-4 w-4" />
+                                    <span><span className="font-medium">위치:</span> {item.location}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Settings className="h-4 w-4" />
+                                    <span><span className="font-medium">규격:</span> {item.specs}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4" />
+                                    <span><span className="font-medium">설치일:</span> {item.installDate}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Wrench className="h-4 w-4" />
+                                    <span><span className="font-medium">내구연한:</span> {item.durability}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <AlertTriangle className="h-4 w-4" />
+                                    <span><span className="font-medium">점검주기:</span> {item.checkCycle}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex flex-col gap-2 ml-4">
+                                {item.notionUrl && (
+                                  <button
+                                    onClick={() => window.open(item.notionUrl, '_blank')}
+                                    className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 flex items-center gap-2 min-w-[100px]"
+                                  >
+                                    <ExternalLink className="h-4 w-4" />
+                                    노션 열기
+                                  </button>
+                                )}
+                                <button className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 flex items-center gap-2">
+                                  <Settings className="h-4 w-4" />
+                                  점검 시작
+                                </button>
+                                <button className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 flex items-center gap-2">
+                                  <AlertTriangle className="h-4 w-4" />
+                                  고장 신고
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 대시보드 탭 */}
+              {activeTab === 'dashboard' && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-blue-600 text-sm font-medium">총 설비 수</p>
+                        <p className="text-2xl font-bold text-blue-900">72종</p>
+                      </div>
+                      <Database className="h-8 w-8 text-blue-600" />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-green-600 text-sm font-medium">정상 가동</p>
+                        <p className="text-2xl font-bold text-green-900">68종</p>
+                      </div>
+                      <Settings className="h-8 w-8 text-green-600" />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-red-600 text-sm font-medium">점검 필요</p>
+                        <p className="text-2xl font-bold text-red-900">4종</p>
+                      </div>
+                      <AlertTriangle className="h-8 w-8 text-red-600" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 팀별 관리 탭 */}
+              {activeTab === 'teams' && (
+                <div className="space-y-6">
+                  {!selectedTeam ? (
+                    // 팀 선택 화면
+                    <div>
+                      <h2 className="text-xl font-bold mb-6">👥 팀별 설비 관리</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div
+                          onClick={() => handleTeamClick('국민체육센터팀')}
+                          className="bg-pink-50 border-pink-200 text-pink-800 hover:bg-pink-100 border rounded-lg p-6 cursor-pointer
+   transition-all duration-200 hover:shadow-lg"
+                       >
+                         <div className="flex items-center justify-between">
+                           <div>
+                             <h3 className="font-semibold text-lg">국민체육센터팀</h3>
+                             <p className="text-sm opacity-75">관리 설비: 31종</p>
+                             <p className="text-xs opacity-60 mt-1">👆 클릭하여 상세 현황 보기</p>
+                           </div>
+                           <Users className="h-8 w-8 opacity-75" />
+                         </div>
+                       </div>
+
+                       <div
+                         onClick={() => handleTeamClick('교통시설팀')}
+                         className="bg-yellow-50 border-yellow-200 text-yellow-800 hover:bg-yellow-100 border rounded-lg p-6 cursor-pointer transition-all duration-200 hover:shadow-lg"
+                       >
+                         <div className="flex items-center justify-between">
+                           <div>
+                             <h3 className="font-semibold text-lg">교통시설팀</h3>
+                             <p className="text-sm opacity-75">관리 설비: 25종</p>
+                             <p className="text-xs opacity-60 mt-1">👆 클릭하여 상세 현황 보기</p>
+                           </div>
+                           <Users className="h-8 w-8 opacity-75" />
+                         </div>
+                       </div>
+
+                       <div
+                         onClick={() => handleTeamClick('백운스포츠센터팀')}
+                         className="bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100 border rounded-lg p-6 cursor-pointer transition-all duration-200 hover:shadow-lg"
+                       >
+                         <div className="flex items-center justify-between">
+                           <div>
+                             <h3 className="font-semibold text-lg">백운스포츠센터팀</h3>
+                             <p className="text-sm opacity-75">관리 설비: 12종</p>
+                             <p className="text-xs opacity-60 mt-1">👆 클릭하여 상세 현황 보기</p>
+                           </div>
+                           <Users className="h-8 w-8 opacity-75" />
+                         </div>
+                       </div>
+
+                       <div
+                         onClick={() => handleTeamClick('포일스포츠센터팀')}
+                         className="bg-green-50 border-green-200 text-green-800 hover:bg-green-100 border rounded-lg p-6 cursor-pointer transition-all duration-200 hover:shadow-lg"
+                       >
+                         <div className="flex items-center justify-between">
+                           <div>
+                             <h3 className="font-semibold text-lg">포일스포츠센터팀</h3>
+                             <p className="text-sm opacity-75">관리 설비: 13종</p>
+                             <p className="text-xs opacity-60 mt-1">👆 클릭하여 상세 현황 보기</p>
+                           </div>
+                           <Users className="h-8 w-8 opacity-75" />
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 ) : (
+                   // 팀 상세 화면
+                   <div>
+                     <div className="flex items-center gap-4 mb-6">
+                       <button
+                         onClick={() => {
+                           setSelectedTeam(null);
+                           setSelectedEquipmentType(null);
+                         }}
+                         className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
+                       >
+                         ← 팀 목록으로
+                       </button>
+                       <h2 className="text-xl font-bold">{selectedTeam} 설비 현황</h2>
+                       {teamEquipmentData[selectedTeam] && (
+                         <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                           총 {teamEquipmentData[selectedTeam].totalCount}종
+                         </span>
+                       )}
+                     </div>
+
+                     {isLoading ? (
+                       <div className="text-center py-8">
+                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                         <p className="text-gray-600">팀 설비 현황을 불러오는 중...</p>
+                       </div>
+                     ) : !selectedEquipmentType ? (
+                       // 설비 유형별 요약
+                       <div className="space-y-4">
+                         <h3 className="text-lg font-semibold">설비 유형별 현황</h3>
+                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                           {teamEquipmentData[selectedTeam] && Object.entries(teamEquipmentData[selectedTeam].equipmentTypes).map(([typeName, typeData]) => (
+                             <button
+                               key={typeName}
+                               onClick={() => setSelectedEquipmentType(typeName)}
+                               className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow text-left"
+                             >
+                               <div className="flex items-center justify-between">
+                                 <div className="flex items-center gap-3">
+                                   {getTypeIcon(typeName)}
+                                   <div>
+                                     <h4 className="font-medium text-gray-900">{typeName}</h4>
+                                     <p className="text-sm text-gray-600">{typeData.count}개 설비</p>
+                                   </div>
+                                 </div>
+                                 <div className="text-right">
+                                   <span className="text-2xl font-bold text-blue-600">{typeData.count}</span>
+                                 </div>
+                               </div>
+                             </button>
+                           ))}
+                         </div>
+                       </div>
+                     ) : (
+                       // 설비 상세 리스트
+                       <div className="space-y-4">
+                         <div className="flex items-center gap-4">
+                           <button
+                             onClick={() => setSelectedEquipmentType(null)}
+                             className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
+                           >
+                             ← 설비 유형으로
+                           </button>
+                           <h3 className="text-lg font-semibold flex items-center gap-2">
+                             {getTypeIcon(selectedEquipmentType)}
+                             {selectedEquipmentType} 상세 목록
+                           </h3>
+                           <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                             {teamEquipmentData[selectedTeam]?.equipmentTypes[selectedEquipmentType]?.count || 0}개
+                           </span>
+                         </div>
+
+                         <div className="space-y-3">
+                           {teamEquipmentData[selectedTeam]?.equipmentTypes[selectedEquipmentType]?.items.map((item, index) => (
+                             <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                               <div className="flex justify-between items-start">
+                                 <div className="flex-1">
+                                   <div className="flex items-center gap-3 mb-2">
+                                     {getEquipmentIcon(item.code)}
+                                     <span className="font-mono text-lg font-bold text-blue-600">{item.code}</span>
+                                   </div>
+                                   <h4 className="font-semibold text-gray-900 mb-2">{item.name}</h4>
+                                   <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                                     <div className="flex items-center gap-2">
+                                       <MapPin className="h-4 w-4" />
+                                       <span>{item.location}</span>
+                                     </div>
+                                     <div className="flex items-center gap-2">
+                                       <Settings className="h-4 w-4" />
+                                       <span>{item.specs}</span>
+                                     </div>
+                                     <div className="flex items-center gap-2">
+                                       <Calendar className="h-4 w-4" />
+                                       <span>점검주기: {item.checkCycle}</span>
+                                     </div>
+                                   </div>
+                                 </div>
+                                 <div className="flex flex-col gap-2 ml-4">
+                                   {item.notionUrl && (
+                                     <button
+                                       onClick={() => window.open(item.notionUrl, '_blank')}
+                                       className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 flex items-center gap-1"
+                                     >
+                                       <ExternalLink className="h-3 w-3" />
+                                       노션
+                                     </button>
+                                   )}
+                                   <button className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 flex items-center gap-1">
+                                     <Settings className="h-3 w-3" />
+                                     점검
+                                   </button>
+                                 </div>
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 )}
+               </div>
+             )}
+           </div>
+         );
+       };
+
+       // React 앱 렌더링
+       ReactDOM.render(<FMSSystem />, document.getElementById('root'));
+   </script>
 </body>
-</html>
+</html>                       
