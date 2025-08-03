@@ -1,23 +1,26 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FMS 시설물 관리시스템</title>
+    <title>FMS System</title>
 </head>
 <body>
     <h1 style="color: blue; text-align: center; margin: 50px;">
-        🔗 FMS 시설물 관리시스템
+        FMS Management System
     </h1>
-    <div id="root" style="border: 2px solid red; padding: 20px; margin: 20px;">
-        <p>React 로딩 중...</p>
+    <div id="root" style="border: 2px solid red; padding: 20px; margin: 20px; background: #f0f0f0;">
+        <p>Loading...</p>
     </div>
     
     <script>
-        // 테스트: root 요소 확인
-        console.log('Root 요소:', document.getElementById('root'));
-        document.getElementById('root').innerHTML = '<h2 style="color: green;">✅ HTML과 JavaScript 정상 작동!</h2>';
+        console.log('Script running!');
+        const rootElement = document.getElementById('root');
+        console.log('Root element:', rootElement);
+        
+        if (rootElement) {
+            rootElement.innerHTML = '<h2 style="color: green;">SUCCESS! Root element found!</h2>';
+        }
     </script>
 </body>
 </html>
