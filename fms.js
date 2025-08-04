@@ -1,9 +1,8 @@
 const { useState, useEffect } = React;
 const { Search, Database, Settings, AlertTriangle, Calendar, MapPin, Building, Zap, Droplets, Shield } = lucideReact;
 
-// 전역 변수로 데이터 저장 (React 상태 문제 회피)
 let globalCSVData = [];
-let isDataLoaded = false;
+let rawCSVText = '';
 
 const FMSSystem = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -11,76 +10,120 @@ const FMSSystem = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadStatus, setLoadStatus] = useState('loading');
   const [dataCount, setDataCount] = useState(0);
+  const [debugInfo, setDebugInfo] = useState('');
 
-  // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
-    if (!isDataLoaded) {
-      loadCSVData();
-    }
+    loadCSVData();
   }, []);
 
   const loadCSVData = async () => {
     try {
-      console.log('📊 CSV 데이터 로딩 시작...');
+      console.log('🚀 CSV 로딩 시작...');
       setLoadStatus('loading');
+      setDebugInfo('CSV 파일 요청 중...');
       
       const response = await fetch('./data.csv');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
       
-      const csvText = await response.text();
-      console.log('📄 CSV 텍스트 길이:', csvText.length);
+      rawCSVText = await response.text();
+      console.log('📄 CSV 텍스트 길이:', rawCSVText.length);
+      console.log('📄 첫 200자:', rawCSVText.substring(0, 200));
       
-      // 간단한 CSV 파싱
-      const lines = csvText.split('\n').filter(line => line.trim());
-      console.log('📋 총 라인 수:', lines.length);
-      
-      if (lines.length < 2) {
-        throw new Error('CSV 파일이 비어있습니다');
+      if (rawCSVText.length < 100) {
+        throw new Error('CSV 파일이 너무 작습니다');
       }
       
-      // 헤더 추출
-      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-      console.log('🏷️ 헤더:', headers);
+      // 매우 관대한 라인 분할
+      let lines = rawCSVText.split('\n');
+      lines = lines.filter(line => line.trim().length > 10); // 10자 이상인 라인만
       
-      // 데이터 파싱
+      console.log('📋 유효한 라인 수:', lines.length);
+      console.log('📋 첫 번째 라인:', lines[0]);
+      console.log('📋 두 번째 라인:', lines[1]);
+      
+      if (lines.length < 2) {
+        throw new Error('유효한 데이터 라인이 없습니다');
+      }
+      
+      // 헤더 추출 (매우 관대하게)
+      const headerLine = lines[0];
+      let headers = [];
+      
+      // 콤마로 분할 시도
+      if (headerLine.includes(',')) {
+        headers = headerLine.split(',').map(h => h.replace(/"/g, '').trim());
+      } else if (headerLine.includes('\t')) {
+        headers = headerLine.split('\t').map(h => h.replace(/"/g, '').trim());
+      } else {
+        headers = ['컬럼1', '컬럼2', '컬럼3', '컬럼4', '컬럼5']; // 기본 헤더
+      }
+      
+      console.log('🏷️ 헤더 개수:', headers.length);
+      console.log('🏷️ 헤더:', headers.slice(0, 10)); // 처음 10개만 표시
+      
+      // 데이터 파싱 (극도로 관대하게)
       globalCSVData = [];
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
+      
+      for (let i = 1; i < lines.length && i < 1000; i++) { // 최대 1000개만 처리
+        const line = lines[i].trim();
+        if (line.length < 5) continue; // 너무 짧은 라인 건너뛰기
         
-        if (values.length >= 10) { // 최소 10개 컬럼이 있는 경우만
+        let values = [];
+        
+        // 구분자 감지 및 분할
+        if (line.includes(',')) {
+          values = line.split(',');
+        } else if (line.includes('\t')) {
+          values = line.split('\t');
+        } else {
+          values = [line]; // 단일 값으로 처리
+        }
+        
+        // 값 정리
+        values = values.map(v => v.replace(/"/g, '').trim());
+        
+        // 최소 3개 이상의 값이 있는 경우만 처리
+        if (values.length >= 3 && values.some(v => v.length > 0)) {
           const row = {};
-          headers.forEach((header, index) => {
-            row[header] = values[index] || '';
-          });
           
-          // 유효한 데이터인지 확인
-          if (row[headers[0]] || row[headers[1]] || row[headers[2]]) {
-            globalCSVData.push(row);
+          // 헤더와 값 매핑
+          for (let j = 0; j < Math.max(headers.length, values.length); j++) {
+            const header = headers[j] || `컬럼${j+1}`;
+            const value = values[j] || '';
+            row[header] = value;
           }
+          
+          // 기본 필드 설정
+          row._rawLine = line;
+          row._lineNumber = i;
+          
+          globalCSVData.push(row);
         }
       }
       
       console.log('✅ 파싱 완료! 총', globalCSVData.length, '개 데이터');
       console.log('🔍 첫 번째 데이터:', globalCSVData[0]);
+      console.log('🔍 두 번째 데이터:', globalCSVData[1]);
+      console.log('🔍 마지막 데이터:', globalCSVData[globalCSVData.length - 1]);
       
-      // 상태 업데이트
       setDataCount(globalCSVData.length);
       setLoadStatus('success');
-      isDataLoaded = true;
+      setDebugInfo(`성공: ${globalCSVData.length}개 데이터 로드`);
       
-      // 전역 접근 가능하도록 설정
+      // 전역 접근
       window.csvData = globalCSVData;
+      window.rawCSV = rawCSVText;
       
     } catch (error) {
       console.error('❌ CSV 로드 오류:', error);
       setLoadStatus('error');
       setDataCount(0);
+      setDebugInfo(`오류: ${error.message}`);
     }
   };
 
-  // 검색 함수
   const handleSearch = () => {
     const term = searchTerm.trim().toLowerCase();
     
@@ -90,39 +133,40 @@ const FMSSystem = () => {
     }
     
     console.log('🔍 검색 시작:', term);
-    console.log('📊 사용 가능한 데이터:', globalCSVData.length, '개');
+    console.log('📊 검색 대상 데이터:', globalCSVData.length, '개');
     
     setIsLoading(true);
     
     try {
-      // 검색 실행
+      // 매우 관대한 검색
       const results = globalCSVData.filter(row => {
-        const searchFields = Object.values(row).join(' ').toLowerCase();
-        return searchFields.includes(term);
+        // 모든 값을 문자열로 변환해서 검색
+        const allText = Object.values(row).join(' ').toLowerCase();
+        return allText.includes(term);
       });
       
       console.log('📋 검색 결과:', results.length, '개');
+      console.log('📋 첫 번째 결과:', results[0]);
       
       // 결과 포맷팅
-      const formattedResults = results.slice(0, 20).map((row, index) => {
-        const headers = Object.keys(row);
+      const formattedResults = results.slice(0, 30).map((row, index) => {
+        const values = Object.values(row);
+        const keys = Object.keys(row);
+        
         return {
           id: index,
-          code: row[headers[0]] || row[headers[1]] || 'N/A',
-          name: row[headers[2]] || row[headers[1]] || 'N/A', 
-          facility: row[headers[3]] || 'N/A',
-          location: row[headers[5]] || 'N/A',
-          installDate: row[headers[4]] || 'N/A',
-          durability: row[headers[6]] || 'N/A',
-          specs: row[headers[7]] || 'N/A',
-          checkCycle: row[headers[8]] || 'N/A',
-          quantity: row[headers[9]] || 'N/A',
-          rawData: row // 디버깅용
+          code: values[0] || values[1] || `ID-${index}`,
+          name: values[1] || values[2] || values[0] || '설비명 없음',
+          facility: values[2] || values[3] || '시설명 없음',
+          location: values[3] || values[4] || values[5] || '위치 없음',
+          details: values.slice(4, 8).filter(v => v).join(', ') || '상세정보 없음',
+          rawData: row,
+          allText: Object.values(row).join(' | ')
         };
       });
       
       setSearchResults(formattedResults);
-      console.log('✅ 포맷된 결과:', formattedResults);
+      console.log('✅ 포맷된 결과:', formattedResults.length, '개');
       
     } catch (error) {
       console.error('❌ 검색 오류:', error);
@@ -132,48 +176,44 @@ const FMSSystem = () => {
     }
   };
 
-  // Enter 키 처리
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSearch();
     }
   };
 
-  // 아이콘 선택
-  const getIcon = (code) => {
-    const c = code.toString().toUpperCase();
-    if (c.includes('EL')) return React.createElement(Zap, { className: "h-4 w-4 text-yellow-600" });
-    if (c.includes('BO')) return React.createElement(Settings, { className: "h-4 w-4 text-blue-600" });
-    if (c.includes('SF')) return React.createElement(Shield, { className: "h-4 w-4 text-red-600" });
-    return React.createElement(Database, { className: "h-4 w-4 text-gray-600" });
-  };
-
-  // 상태 표시
   const getStatusDisplay = () => {
     if (loadStatus === 'success') {
-      return React.createElement('div', { className: "bg-green-50 border border-green-200 rounded-lg p-3" },
-        React.createElement('div', { className: "flex items-center gap-2" },
-          React.createElement('div', { className: "w-2 h-2 bg-green-500 rounded-full" }),
-          React.createElement('span', { className: "text-green-700 font-medium" }, `✅ CSV 데이터 로드 성공! (총 ${dataCount}개)`)
+      return React.createElement('div', { className: "bg-green-50 border border-green-200 rounded-lg p-4" },
+        React.createElement('div', { className: "flex items-center gap-2 mb-2" },
+          React.createElement('div', { className: "w-3 h-3 bg-green-500 rounded-full" }),
+          React.createElement('span', { className: "text-green-700 font-bold" }, `✅ CSV 데이터 로드 성공!`)
+        ),
+        React.createElement('div', { className: "text-sm text-green-600" },
+          React.createElement('div', null, `📊 총 ${dataCount}개 데이터 로드 완료`),
+          React.createElement('div', null, `📄 CSV 파일 크기: ${rawCSVText.length.toLocaleString()}자`),
+          React.createElement('div', null, `🔍 검색 가능 상태`)
         )
       );
     } else if (loadStatus === 'error') {
-      return React.createElement('div', { className: "bg-red-50 border border-red-200 rounded-lg p-3" },
-        React.createElement('div', { className: "flex items-center gap-2" },
-          React.createElement(AlertTriangle, { className: "h-4 w-4 text-red-500" }),
-          React.createElement('span', { className: "text-red-700" }, '❌ 데이터 로드 실패'),
-          React.createElement('button', { 
-            onClick: loadCSVData,
-            className: "ml-2 text-red-600 underline"
-          }, '재시도')
-        )
+      return React.createElement('div', { className: "bg-red-50 border border-red-200 rounded-lg p-4" },
+        React.createElement('div', { className: "flex items-center gap-2 mb-2" },
+          React.createElement(AlertTriangle, { className: "h-5 w-5 text-red-500" }),
+          React.createElement('span', { className: "text-red-700 font-bold" }, '❌ 데이터 로드 실패')
+        ),
+        React.createElement('div', { className: "text-sm text-red-600 mb-2" }, debugInfo),
+        React.createElement('button', { 
+          onClick: loadCSVData,
+          className: "px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+        }, '🔄 재시도')
       );
     } else {
-      return React.createElement('div', { className: "bg-yellow-50 border border-yellow-200 rounded-lg p-3" },
+      return React.createElement('div', { className: "bg-yellow-50 border border-yellow-200 rounded-lg p-4" },
         React.createElement('div', { className: "flex items-center gap-2" },
-          React.createElement('div', { className: "w-2 h-2 bg-yellow-500 rounded-full animate-spin" }),
-          React.createElement('span', { className: "text-yellow-700" }, '⏳ CSV 데이터 로딩 중...')
-        )
+          React.createElement('div', { className: "w-3 h-3 bg-yellow-500 rounded-full animate-spin" }),
+          React.createElement('span', { className: "text-yellow-700 font-bold" }, '⏳ CSV 데이터 로딩 중...')
+        ),
+        React.createElement('div', { className: "text-sm text-yellow-600 mt-1" }, debugInfo)
       );
     }
   };
@@ -182,12 +222,12 @@ const FMSSystem = () => {
     // 헤더
     React.createElement('div', { className: "mb-8" },
       React.createElement('div', { className: "flex items-center gap-3 mb-4" },
-        React.createElement('div', { className: "bg-blue-600 p-2 rounded-lg" },
-          React.createElement(Database, { className: "h-6 w-6 text-white" })
+        React.createElement('div', { className: "bg-blue-600 p-3 rounded-lg" },
+          React.createElement(Database, { className: "h-7 w-7 text-white" })
         ),
         React.createElement('div', null,
-          React.createElement('h1', { className: "text-2xl font-bold text-gray-900" }, '🔗 노성 연동 FMS 시설물 관리시스템'),
-          React.createElement('p', { className: "text-gray-600" }, '실시간 CSV 데이터 연동 • 스마트 설비 검색 • 통합 관리')
+          React.createElement('h1', { className: "text-3xl font-bold text-gray-900" }, '🔗 노성 연동 FMS 시설물 관리시스템'),
+          React.createElement('p', { className: "text-gray-600 text-lg" }, '실시간 CSV 데이터 연동 • 스마트 설비 검색 • 통합 관리')
         )
       ),
       getStatusDisplay()
@@ -196,63 +236,95 @@ const FMSSystem = () => {
     // 검색 섹션
     React.createElement('div', { className: "space-y-6" },
       React.createElement('div', { className: "bg-gray-50 rounded-lg p-6" },
-        React.createElement('h2', { className: "text-lg font-semibold mb-4 flex items-center gap-2" },
-          React.createElement(Search, { className: "h-5 w-5" }),
-          '🔍 노성 설비 검색'
+        React.createElement('h2', { className: "text-xl font-bold mb-4 flex items-center gap-2" },
+          React.createElement(Search, { className: "h-6 w-6" }),
+          '🔍 전체 데이터 검색'
         ),
-        React.createElement('div', { className: "flex gap-2 mb-3" },
+        React.createElement('div', { className: "flex gap-3 mb-4" },
           React.createElement('input', {
             type: "text",
-            placeholder: "아무 키워드나 입력하세요 (예: SC01, 보일러, 지하1층)",
+            placeholder: "모든 필드에서 검색합니다 (예: SC01, 보일러, 지하1층, 설비명...)",
             value: searchTerm,
             onChange: (e) => setSearchTerm(e.target.value),
             onKeyPress: handleKeyPress,
-            className: "flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500",
+            className: "flex-1 px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
             disabled: isLoading || dataCount === 0
           }),
           React.createElement('button', {
             onClick: handleSearch,
             disabled: isLoading || dataCount === 0,
-            className: "px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className: "px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           },
             isLoading ? '🔄 검색중...' : '🔍 검색'
           )
         ),
-        React.createElement('div', { className: "flex gap-2" },
+        React.createElement('div', { className: "flex gap-2 flex-wrap" },
           React.createElement('button', {
-            onClick: () => { setSearchTerm('SC01'); handleSearch(); },
-            className: "px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+            onClick: () => { setSearchTerm('SC01'); setTimeout(handleSearch, 100); },
+            className: "px-3 py-2 bg-blue-100 text-blue-700 rounded font-medium hover:bg-blue-200"
           }, 'SC01'),
           React.createElement('button', {
-            onClick: () => { setSearchTerm('보일러'); handleSearch(); },
-            className: "px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+            onClick: () => { setSearchTerm('보일러'); setTimeout(handleSearch, 100); },
+            className: "px-3 py-2 bg-green-100 text-green-700 rounded font-medium hover:bg-green-200"
           }, '보일러'),
           React.createElement('button', {
-            onClick: () => { setSearchTerm('지하'); handleSearch(); },
-            className: "px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
-          }, '지하')
+            onClick: () => { setSearchTerm('전기'); setTimeout(handleSearch, 100); },
+            className: "px-3 py-2 bg-yellow-100 text-yellow-700 rounded font-medium hover:bg-yellow-200"
+          }, '전기'),
+          React.createElement('button', {
+            onClick: () => { setSearchTerm('지하'); setTimeout(handleSearch, 100); },
+            className: "px-3 py-2 bg-purple-100 text-purple-700 rounded font-medium hover:bg-purple-200"
+          }, '지하'),
+          React.createElement('button', {
+            onClick: () => { setSearchTerm('2021'); setTimeout(handleSearch, 100); },
+            className: "px-3 py-2 bg-red-100 text-red-700 rounded font-medium hover:bg-red-200"
+          }, '2021')
         )
       ),
       
       // 검색 결과
       searchResults.length > 0 && React.createElement('div', null,
-        React.createElement('h3', { className: "text-lg font-semibold mb-4" }, `📋 검색 결과 (${searchResults.length}건)`),
+        React.createElement('h3', { className: "text-xl font-bold mb-4 text-blue-600" }, 
+          `📋 검색 결과 (${searchResults.length}건 표시)`
+        ),
         React.createElement('div', { className: "space-y-4" },
           searchResults.map((item) =>
-            React.createElement('div', { key: item.id, className: "bg-white border rounded-lg p-4 shadow-sm" },
-              React.createElement('div', { className: "flex items-start justify-between" },
+            React.createElement('div', { key: item.id, className: "bg-white border-2 border-gray-200 rounded-lg p-5 hover:shadow-lg hover:border-blue-300 transition-all" },
+              React.createElement('div', { className: "flex items-start justify-between mb-3" },
                 React.createElement('div', { className: "flex-1" },
-                  React.createElement('div', { className: "flex items-center gap-2 mb-2" },
-                    getIcon(item.code),
-                    React.createElement('span', { className: "font-mono font-bold text-blue-600" }, item.code),
-                    React.createElement('span', { className: "px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded" }, '설비')
+                  React.createElement('div', { className: "flex items-center gap-3 mb-3" },
+                    React.createElement(Database, { className: "h-5 w-5 text-blue-600" }),
+                    React.createElement('span', { className: "font-mono text-lg font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded" }, 
+                      item.code
+                    ),
+                    React.createElement('span', { className: "px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full" }, 
+                      '설비'
+                    )
                   ),
-                  React.createElement('h4', { className: "font-semibold text-lg mb-2" }, item.name),
-                  React.createElement('div', { className: "grid grid-cols-2 gap-3 text-sm text-gray-600" },
-                    React.createElement('div', null, '🏢 시설: ', item.facility),
-                    React.createElement('div', null, '📍 위치: ', item.location),
-                    React.createElement('div', null, '📅 설치: ', item.installDate),
-                    React.createElement('div', null, '🔧 규격: ', item.specs)
+                  React.createElement('h4', { className: "font-bold text-xl text-gray-900 mb-3" }, item.name),
+                  React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mb-3" },
+                    React.createElement('div', { className: "flex items-center gap-2" },
+                      React.createElement(Building, { className: "h-4 w-4 text-gray-500" }),
+                      React.createElement('span', { className: "text-gray-700" }, '시설: '),
+                      React.createElement('span', { className: "font-medium" }, item.facility)
+                    ),
+                    React.createElement('div', { className: "flex items-center gap-2" },
+                      React.createElement(MapPin, { className: "h-4 w-4 text-gray-500" }),
+                      React.createElement('span', { className: "text-gray-700" }, '위치: '),
+                      React.createElement('span', { className: "font-medium" }, item.location)
+                    )
+                  ),
+                  React.createElement('div', { className: "mt-3 p-3 bg-gray-50 rounded text-sm" },
+                    React.createElement('div', { className: "font-medium text-gray-700 mb-1" }, '📄 상세정보:'),
+                    React.createElement('div', { className: "text-gray-600" }, item.details)
+                  ),
+                  React.createElement('details', { className: "mt-2" },
+                    React.createElement('summary', { className: "cursor-pointer text-xs text-gray-500 hover:text-gray-700" }, 
+                      '🔍 원본 데이터 보기'
+                    ),
+                    React.createElement('div', { className: "mt-2 p-2 bg-gray-100 rounded text-xs font-mono text-gray-600 overflow-x-auto" },
+                      item.allText
+                    )
                   )
                 )
               )
@@ -263,9 +335,11 @@ const FMSSystem = () => {
       
       // 검색 결과 없음
       searchTerm && !isLoading && searchResults.length === 0 && dataCount > 0 && 
-        React.createElement('div', { className: "text-center py-8 text-gray-500" },
-          React.createElement('p', null, '❌ 검색 결과가 없습니다'),
-          React.createElement('p', { className: "text-sm mt-2" }, '다른 키워드로 검색해보세요')
+        React.createElement('div', { className: "text-center py-12 bg-gray-50 rounded-lg" },
+          React.createElement('div', { className: "text-6xl mb-4" }, '🔍'),
+          React.createElement('h3', { className: "text-xl font-bold text-gray-600 mb-2" }, '검색 결과가 없습니다'),
+          React.createElement('p', { className: "text-gray-500" }, `"${searchTerm}"에 대한 검색 결과를 찾을 수 없습니다`),
+          React.createElement('p', { className: "text-sm text-gray-400 mt-2" }, '다른 키워드로 검색해보세요')
         )
     )
   );
