@@ -5,524 +5,294 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FMS 시설물 관리시스템</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
-        }
-        .tab-active {
-            background-color: white;
-            color: #2563eb;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-        }
-        .equipment-card:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-        .loading-spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3498db;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100">
     <div class="max-w-6xl mx-auto p-6">
         <!-- 헤더 -->
-        <div class="mb-8">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="bg-blue-600 p-2 rounded-lg">
-                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V7M4 7c0-2.21 1.79-4 4-4h8c2.21 0 4 1.79 4 4M4 7h16"></path>
-                    </svg>
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">🔗 FMS 시설물 관리시스템</h1>
+            <p class="text-gray-600">순수 JavaScript로 구현된 확실한 CSV 검색 시스템</p>
+            
+            <!-- 상태 표시 -->
+            <div id="status" class="mt-4 p-3 rounded-lg">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-yellow-500 rounded-full animate-spin"></div>
+                    <span class="text-yellow-700 font-medium">CSV 데이터 로딩 중...</span>
                 </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">🔗 노션 연동 FMS 시설물 관리시스템</h1>
-                    <p class="text-gray-600">노션 CSV 데이터 연동 • 스마트 설비 검색 • 통합 관리</p>
-                </div>
+            </div>
+        </div>
+
+        <!-- 검색 섹션 -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">🔍 설비 검색</h2>
+            <div class="flex gap-3 mb-4">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="검색어를 입력하세요..."
+                    class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled
+                >
+                <button 
+                    id="searchBtn" 
+                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled
+                >
+                    검색
+                </button>
             </div>
             
-            <!-- 데이터 연결 상태 -->
-            <div id="connectionStatus" class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2">
-                <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                <span class="text-yellow-700 text-sm font-medium">CSV 데이터 로딩 중...</span>
-            </div>
-        </div>
-
-        <!-- 탭 네비게이션 -->
-        <div class="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
-            <button onclick="showTab('search')" id="tab-search" class="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-colors tab-active">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                🔍 설비 검색
-            </button>
-            <button onclick="showTab('dashboard')" id="tab-dashboard" class="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-900">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
-                📊 대시보드
-            </button>
-            <button onclick="showTab('teams')" id="tab-teams" class="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-900">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                </svg>
-                👥 팀별 관리
-            </button>
-        </div>
-
-        <!-- 검색 탭 -->
-        <div id="content-search" class="space-y-6">
-            <div class="bg-white rounded-lg p-6 shadow-sm">
-                <h2 class="text-lg font-semibold mb-4">🔍 노션 설비 검색</h2>
-                <div class="flex gap-2">
-                    <input type="text" id="searchInput" placeholder="설비코드, 설비명, 위치로 검색 (예: SC01, 수변전실, 지하1층)" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <button onclick="handleSearch()" id="searchButton" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 flex items-center gap-2">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        검색
-                    </button>
-                </div>
-                <div class="mt-4">
-                    <button onclick="loadCSVData()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        데이터 새로고침
-                    </button>
-                </div>
-            </div>
-            
-            <!-- 검색 결과 -->
-            <div id="searchResults" class="hidden">
-                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V7M4 7c0-2.21 1.79-4 4-4h8c2.21 0 4 1.79 4 4M4 7h16"></path>
-                    </svg>
-                    검색 결과 (<span id="resultCount">0</span>건)
-                </h3>
-                <div id="resultList" class="space-y-4"></div>
+            <!-- 빠른 검색 버튼 -->
+            <div class="flex gap-2 flex-wrap">
+                <button class="quick-search px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" data-term="SC01">SC01</button>
+                <button class="quick-search px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" data-term="보일러">보일러</button>
+                <button class="quick-search px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" data-term="전기">전기</button>
+                <button class="quick-search px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" data-term="지하">지하</button>
+                <button class="quick-search px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" data-term="2021">2021</button>
             </div>
 
-            <!-- 로딩 상태 -->
-            <div id="loadingState" class="hidden text-center py-8">
-                <div class="loading-spinner mx-auto mb-4"></div>
-                <p class="text-gray-600">CSV 데이터를 로딩 중...</p>
-            </div>
+            <!-- 데이터 정보 -->
+            <div id="dataInfo" class="mt-4 text-sm text-gray-600"></div>
         </div>
 
-        <!-- 대시보드 탭 -->
-        <div id="content-dashboard" class="hidden">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-blue-600 text-sm font-medium">총 설비 수</p>
-                            <p id="totalEquipment" class="text-2xl font-bold text-blue-900">-</p>
-                        </div>
-                        <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V7M4 7c0-2.21 1.79-4 4-4h8c2.21 0 4 1.79 4 4M4 7h16"></path>
-                        </svg>
-                    </div>
-                </div>
-                
-                <div class="bg-green-50 border border-green-200 rounded-lg p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-green-600 text-sm font-medium">SC01 설비</p>
-                            <p id="sc01Equipment" class="text-2xl font-bold text-green-900">-</p>
-                        </div>
-                        <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                    </div>
-                </div>
-                
-                <div class="bg-purple-50 border border-purple-200 rounded-lg p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-purple-600 text-sm font-medium">팀 수</p>
-                            <p id="totalTeams" class="text-2xl font-bold text-purple-900">-</p>
-                        </div>
-                        <svg class="h-8 w-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 팀별 관리 탭 -->
-        <div id="content-teams" class="hidden">
-            <h2 class="text-xl font-bold mb-6">👥 팀별 설비 관리</h2>
-            <div id="teamsList" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- 팀 목록이 동적으로 생성됩니다 -->
-            </div>
-        </div>
+        <!-- 검색 결과 -->
+        <div id="results" class="space-y-4"></div>
     </div>
 
     <script>
         // 전역 변수
-        let allEquipmentData = [];
-        let csvHeaders = [];
+        let csvData = [];
+        let isLoading = false;
 
-        // CSV 데이터 로드 함수
-        async function loadCSVData() {
-            const statusDiv = document.getElementById('connectionStatus');
-            const loadingDiv = document.getElementById('loadingState');
+        // DOM 요소
+        const statusEl = document.getElementById('status');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const resultsEl = document.getElementById('results');
+        const dataInfoEl = document.getElementById('dataInfo');
+        const quickSearchBtns = document.querySelectorAll('.quick-search');
+
+        // 상태 업데이트
+        function updateStatus(type, message, details = '') {
+            const colors = {
+                loading: 'bg-yellow-50 border-yellow-200 text-yellow-700',
+                success: 'bg-green-50 border-green-200 text-green-700',
+                error: 'bg-red-50 border-red-200 text-red-700'
+            };
             
-            loadingDiv.classList.remove('hidden');
-            
-            statusDiv.innerHTML = `
-                <div class="loading-spinner"></div>
-                <span class="text-yellow-700 text-sm font-medium">CSV 데이터 로딩 중...</span>
+            const icons = {
+                loading: '<div class="w-3 h-3 bg-yellow-500 rounded-full animate-spin"></div>',
+                success: '<div class="w-3 h-3 bg-green-500 rounded-full"></div>',
+                error: '<div class="w-3 h-3 bg-red-500 rounded-full"></div>'
+            };
+
+            statusEl.className = `mt-4 p-3 rounded-lg border ${colors[type]}`;
+            statusEl.innerHTML = `
+                <div class="flex items-center gap-2">
+                    ${icons[type]}
+                    <span class="font-medium">${message}</span>
+                </div>
+                ${details ? `<div class="mt-2 text-sm">${details}</div>` : ''}
             `;
+        }
 
+        // CSV 로드 및 파싱
+        async function loadCSVData() {
             try {
-                // CSV 파일 가져오기 (GitHub에서 직접)
-                const response = await fetch('./data.csv');
+                console.log('🚀 CSV 로딩 시작...');
+                updateStatus('loading', 'CSV 파일을 불러오는 중...');
                 
+                const response = await fetch('./data.csv');
                 if (!response.ok) {
-                    throw new Error(`CSV 파일을 찾을 수 없습니다: ${response.status}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const csvText = await response.text();
-                console.log('CSV 데이터 로드 성공!');
+                console.log('📄 CSV 크기:', csvText.length, '바이트');
                 
-                // CSV 파싱
-                const lines = csvText.split('\n').filter(line => line.trim());
+                // 다양한 구분자로 파싱 시도
+                const separators = [',', ';', '\t', '|'];
+                let bestResult = { data: [], separator: '', count: 0 };
                 
-                if (lines.length === 0) {
-                    throw new Error('CSV 파일이 비어있습니다');
+                for (const sep of separators) {
+                    try {
+                        const result = parseCSV(csvText, sep);
+                        console.log(`📊 ${sep === ',' ? '콤마' : sep === ';' ? '세미콜론' : sep === '\t' ? '탭' : '파이프'} 구분자: ${result.length}개`);
+                        
+                        if (result.length > bestResult.count) {
+                            bestResult = { data: result, separator: sep, count: result.length };
+                        }
+                    } catch (e) {
+                        console.log(`❌ ${sep} 구분자 실패:`, e.message);
+                    }
                 }
                 
-                // 헤더 추출 (첫 번째 줄)
-                csvHeaders = lines[0].split(',').map(header => header.trim().replace(/"/g, ''));
-                console.log('CSV 헤더:', csvHeaders);
+                if (bestResult.count === 0) {
+                    throw new Error('어떤 구분자로도 데이터를 파싱할 수 없습니다');
+                }
                 
-                // 데이터 파싱
-                allEquipmentData = lines.slice(1).map(line => {
-                    const values = parseCSVLine(line);
-                    const item = {};
-                    
-                    csvHeaders.forEach((header, index) => {
-                        item[mapHeaderToProperty(header)] = values[index] || '';
-                    });
-                    
-                    return item;
-                }).filter(item => item.code && item.code.trim()); // 빈 데이터 제거
+                csvData = bestResult.data;
+                console.log('✅ 최종 데이터:', csvData.length, '개');
+                console.log('🔍 첫 번째 데이터:', csvData[0]);
                 
-                console.log(`✅ 총 ${allEquipmentData.length}개 데이터 로드 완료!`);
+                updateStatus('success', `✅ CSV 데이터 로드 성공!`, 
+                    `총 ${csvData.length}개 데이터 • 구분자: ${bestResult.separator === ',' ? '콤마(,)' : bestResult.separator === ';' ? '세미콜론(;)' : bestResult.separator === '\t' ? '탭' : '파이프(|)'}`
+                );
                 
-                // 상태 업데이트
-                statusDiv.innerHTML = `
-                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span class="text-green-700 text-sm font-medium">CSV 데이터 로드 성공! (총 ${allEquipmentData.length}개)</span>
-                    <button onclick="loadCSVData()" class="ml-auto text-green-600 hover:text-green-700 text-sm underline">새로고침</button>
-                `;
-                statusDiv.className = 'bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2';
+                // 검색 활성화
+                searchInput.disabled = false;
+                searchBtn.disabled = false;
+                quickSearchBtns.forEach(btn => btn.disabled = false);
                 
-                // 대시보드 및 팀 목록 업데이트
-                updateDashboard();
-                updateTeamsList();
-                
-                // 기본 검색 결과 표시 (최근 10개)
-                displaySearchResults(allEquipmentData.slice(0, 10));
+                // 데이터 정보 표시
+                if (csvData.length > 0) {
+                    const headers = Object.keys(csvData[0]);
+                    dataInfoEl.innerHTML = `
+                        <div><strong>컬럼:</strong> ${headers.slice(0, 5).join(', ')}${headers.length > 5 ? ` 외 ${headers.length - 5}개` : ''}</div>
+                        <div><strong>검색 가능:</strong> 모든 필드에서 통합 검색</div>
+                    `;
+                }
                 
             } catch (error) {
-                console.error('CSV 로드 오류:', error);
-                statusDiv.innerHTML = `
-                    <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                    <span class="text-red-700 text-sm font-medium">데이터 로드 실패: ${error.message}</span>
-                    <button onclick="loadCSVData()" class="ml-auto text-red-600 hover:text-red-700 text-sm underline">재시도</button>
-                `;
-                statusDiv.className = 'bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2';
-            } finally {
-                loadingDiv.classList.add('hidden');
+                console.error('❌ CSV 로드 오류:', error);
+                updateStatus('error', '❌ 데이터 로드 실패', error.message);
             }
         }
 
-        // CSV 라인 파싱 (따옴표 처리)
-        function parseCSVLine(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
+        // CSV 파싱 함수
+        function parseCSV(csvText, separator) {
+            const lines = csvText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
             
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
+            if (lines.length < 2) {
+                throw new Error('데이터가 부족합니다');
+            }
+            
+            // 헤더 파싱
+            const headers = lines[0].split(separator).map(h => h.replace(/^"|"$/g, '').trim());
+            
+            if (headers.length < 2) {
+                throw new Error('충분한 컬럼이 없습니다');
+            }
+            
+            // 데이터 파싱
+            const data = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(separator).map(v => v.replace(/^"|"$/g, '').trim());
                 
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    result.push(current.trim());
-                    current = '';
-                } else {
-                    current += char;
+                if (values.length >= Math.max(2, headers.length - 3)) { // 관대한 검증
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index] || '';
+                    });
+                    
+                    // 유효한 데이터인지 확인
+                    if (Object.values(row).some(v => v && v.length > 0)) {
+                        data.push(row);
+                    }
                 }
             }
             
-            result.push(current.trim());
-            return result.map(value => value.replace(/"/g, ''));
-        }
-
-        // 헤더를 속성명으로 매핑
-        function mapHeaderToProperty(header) {
-            const mapping = {
-                '설비코드': 'code',
-                'Code': 'code',
-                '코드': 'code',
-                '설비명': 'name',
-                'Name': 'name',
-                '이름': 'name',
-                '제목': 'name',
-                'Title': 'name',
-                '시설명': 'facility',
-                'Facility': 'facility',
-                '시설': 'facility',
-                '위치': 'location',
-                'Location': 'location',
-                '장소': 'location',
-                '관리팀': 'team',
-                'Team': 'team',
-                '팀': 'team',
-                '부서': 'team',
-                '규격': 'specs',
-                'Specs': 'specs',
-                '사양': 'specs',
-                '설치일': 'installDate',
-                'Install Date': 'installDate',
-                '설치일자': 'installDate',
-                '내구연한': 'durability',
-                'Durability': 'durability',
-                '수명': 'durability',
-                '점검주기': 'checkCycle',
-                'Check Cycle': 'checkCycle',
-                '점검': 'checkCycle'
-            };
+            if (data.length === 0) {
+                throw new Error('유효한 데이터가 없습니다');
+            }
             
-            return mapping[header] || header.toLowerCase().replace(/\s+/g, '');
-        }
-
-        // 대시보드 업데이트
-        function updateDashboard() {
-            document.getElementById('totalEquipment').textContent = allEquipmentData.length + '종';
-            
-            const sc01Count = allEquipmentData.filter(item => 
-                item.code && item.code.toLowerCase().includes('sc01')
-            ).length;
-            document.getElementById('sc01Equipment').textContent = sc01Count + '종';
-            
-            const teams = [...new Set(allEquipmentData.map(item => item.team).filter(Boolean))];
-            document.getElementById('totalTeams').textContent = teams.length + '개';
-        }
-
-        // 팀 목록 업데이트
-        function updateTeamsList() {
-            const teams = [...new Set(allEquipmentData.map(item => item.team).filter(Boolean))];
-            const teamsList = document.getElementById('teamsList');
-            
-            const colors = ['pink', 'yellow', 'blue', 'green', 'purple', 'indigo', 'red', 'gray'];
-            
-            teamsList.innerHTML = teams.map((team, index) => {
-                const color = colors[index % colors.length];
-                const count = allEquipmentData.filter(item => item.team === team).length;
-                
-                return `
-                    <div onclick="showTeamDetails('${team}')" class="bg-${color}-50 border-${color}-200 text-${color}-800 hover:bg-${color}-100 border rounded-lg p-6 cursor-pointer transition-all duration-200 hover:shadow-lg">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="font-semibold text-lg">${team}</h3>
-                                <p class="text-sm opacity-75">관리 설비: ${count}종</p>
-                                <p class="text-xs opacity-60 mt-1">👆 클릭하여 상세 현황 보기</p>
-                            </div>
-                            <svg class="h-8 w-8 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // 팀 상세 보기
-        function showTeamDetails(teamName) {
-            const teamEquipment = allEquipmentData.filter(item => item.team === teamName);
-            displaySearchResults(teamEquipment);
-            showTab('search');
-            document.getElementById('searchInput').value = teamName;
-        }
-
-        // 탭 전환 함수
-        function showTab(tabName) {
-            // 모든 탭 컨텐츠 숨기기
-            document.getElementById('content-search').classList.add('hidden');
-            document.getElementById('content-dashboard').classList.add('hidden');
-            document.getElementById('content-teams').classList.add('hidden');
-            
-            // 모든 탭 버튼 비활성화
-            const tabs = ['search', 'dashboard', 'teams'];
-            tabs.forEach(tab => {
-                document.getElementById('tab-' + tab).className = 'flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-900';
-            });
-            
-            // 선택된 탭 활성화
-            document.getElementById('content-' + tabName).classList.remove('hidden');
-            document.getElementById('tab-' + tabName).className = 'flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-colors tab-active';
+            return data;
         }
 
         // 검색 함수
-        function handleSearch() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        function performSearch(term) {
+            if (!term || !term.trim()) {
+                resultsEl.innerHTML = '';
+                return;
+            }
             
-            if (!searchTerm) {
-                displaySearchResults(allEquipmentData.slice(0, 20)); // 검색어 없으면 최근 20개
-                return;
-            }
-
-            if (allEquipmentData.length === 0) {
-                alert('먼저 CSV 데이터를 로드해주세요.');
-                return;
-            }
-
-            const results = allEquipmentData.filter(item => {
-                const searchFields = [
-                    item.code || '',
-                    item.name || '',
-                    item.location || '',
-                    item.facility || '',
-                    item.team || '',
-                    item.specs || ''
-                ];
-                
-                return searchFields.some(field => 
-                    field.toLowerCase().includes(searchTerm)
+            console.log('🔍 검색 시작:', term);
+            const searchTerm = term.toLowerCase();
+            
+            // 검색 실행
+            const results = csvData.filter(row => {
+                return Object.values(row).some(value => 
+                    value && value.toString().toLowerCase().includes(searchTerm)
                 );
             });
-
-            displaySearchResults(results);
+            
+            console.log('📋 검색 결과:', results.length, '개');
+            
+            // 결과 표시
+            displayResults(results, term);
         }
 
-        // 검색 결과 표시
-        function displaySearchResults(results) {
-            const resultDiv = document.getElementById('searchResults');
-            const resultCount = document.getElementById('resultCount');
-            const resultList = document.getElementById('resultList');
-
-            if (results.length > 0) {
-                resultDiv.classList.remove('hidden');
-                resultCount.textContent = results.length;
-                
-                resultList.innerHTML = results.map((item, index) => `
-                    <div class="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-lg transition-shadow equipment-card">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="w-3 h-3 bg-blue-600 rounded-full"></span>
-                                    <span class="font-mono text-lg font-bold text-blue-600">${item.code || 'N/A'}</span>
-                                    <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">${item.team || 'N/A'}</span>
+        // 결과 표시 함수
+        function displayResults(results, searchTerm) {
+            if (results.length === 0) {
+                resultsEl.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+                        <div class="text-4xl mb-4">🔍</div>
+                        <h3 class="text-lg font-bold text-gray-600 mb-2">검색 결과가 없습니다</h3>
+                        <p class="text-gray-500">"${searchTerm}"에 대한 결과를 찾을 수 없습니다</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const html = `
+                <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                    <h3 class="text-lg font-bold text-blue-600">📋 검색 결과 (${results.length}건)</h3>
+                    <p class="text-sm text-gray-600">"${searchTerm}" 검색 결과</p>
+                </div>
+                ${results.slice(0, 20).map((row, index) => {
+                    const values = Object.values(row);
+                    const keys = Object.keys(row);
+                    
+                    return `
+                        <div class="bg-white rounded-lg shadow-sm p-5 border-l-4 border-blue-500">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <span class="text-blue-600 font-bold">${index + 1}</span>
                                 </div>
-                                <h4 class="font-semibold text-gray-900 text-lg mb-2">${item.name || 'N/A'}</h4>
-                                <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                                    <div class="flex items-center gap-2">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                        </svg>
-                                        <span><span class="font-medium">시설:</span> ${item.facility || 'N/A'}</span>
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-lg text-gray-900 mb-2">${values[0] || `항목 ${index + 1}`}</h4>
+                                    <div class="text-gray-700 mb-3">${values[1] || values[2] || '상세정보 없음'}</div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
+                                        ${values.slice(2, 6).filter(v => v).map(v => `<div>• ${v}</div>`).join('')}
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        </svg>
-                                        <span><span class="font-medium">위치:</span> ${item.location || 'N/A'}</span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c
-                                            1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                       </svg>
-                                       <span><span class="font-medium">규격:</span> ${item.specs || 'N/A'}</span>
-                                   </div>
-                                   <div class="flex items-center gap-2">
-                                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                       </svg>
-                                       <span><span class="font-medium">설치일:</span> ${item.installDate || 'N/A'}</span>
-                                   </div>
-                                   <div class="flex items-center gap-2">
-                                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                       </svg>
-                                       <span><span class="font-medium">점검주기:</span> ${item.checkCycle || 'N/A'}</span>
-                                   </div>
-                                   <div class="flex items-center gap-2">
-                                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                       </svg>
-                                       <span><span class="font-medium">내구연한:</span> ${item.durability || 'N/A'}</span>
-                                   </div>
-                               </div>
-                           </div>
-                           <div class="flex flex-col gap-2 ml-4">
-                               <button onclick="openNotionPage('${item.code}')" class="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 flex items-center gap-2 min-w-[100px]">
-                                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                   </svg>
-                                   노션 열기
-                               </button>
-                               <button class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 flex items-center gap-2">
-                                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                   </svg>
-                                   점검 시작
-                               </button>
-                               <button class="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 flex items-center gap-2">
-                                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                                   </svg>
-                                   고장 신고
-                               </button>
-                           </div>
-                       </div>
-                   </div>
-               `).join('');
-           } else {
-               resultDiv.classList.add('hidden');
-           }
-       }
+                                    <details class="text-xs">
+                                        <summary class="cursor-pointer text-blue-600 hover:text-blue-800 mb-2">전체 데이터 보기</summary>
+                                        <div class="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
+                                            ${Object.entries(row).map(([k, v]) => `<div><strong>${k}:</strong> ${v}</div>`).join('')}
+                                        </div>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            `;
+            
+            resultsEl.innerHTML = html;
+        }
 
-       // 노션 페이지 열기
-       function openNotionPage(equipmentCode) {
-           // 노션 데이터베이스 URL (실제 URL로 교체해주세요)
-           const notionBaseUrl = 'https://www.notion.so/';
-           window.open(notionBaseUrl, '_blank');
-       }
+        // 이벤트 리스너
+        searchBtn.addEventListener('click', () => {
+            performSearch(searchInput.value);
+        });
 
-       // Enter 키 검색
-       document.getElementById('searchInput').addEventListener('keypress', function(e) {
-           if (e.key === 'Enter') {
-               handleSearch();
-           }
-       });
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch(searchInput.value);
+            }
+        });
 
-       // 페이지 로드시 자동으로 CSV 데이터 로드
-       window.addEventListener('load', function() {
-           console.log('✅ FMS CSV 연동 시스템 시작!');
-           loadCSVData(); // 자동으로 CSV 로드
-       });
-   </script>
+        quickSearchBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const term = btn.dataset.term;
+                searchInput.value = term;
+                performSearch(term);
+            });
+        });
+
+        // 페이지 로드 시 CSV 데이터 로드
+        window.addEventListener('load', loadCSVData);
+    </script>
 </body>
 </html>
